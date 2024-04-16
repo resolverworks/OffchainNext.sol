@@ -28,7 +28,7 @@ let ccip_ok = await serve(ezccip, {protocol: 'raw', log: false});
 let ccip_signed = await serve(ezccip, {protocol: 'tor', log: false});
 
 let ezccip_wrong = new EZCCIP();
-ezccip_wrong.register('chonk() returns (uint256)', () => [~EXPECT]);
+ezccip_wrong.register('chonk() returns (uint256)', () => [EXPECT+1]);
 let ccip_wrong = await serve(ezccip_wrong, {protocol: 'raw', log: false});
 
 let ezccip_throw = new EZCCIP();
