@@ -1,6 +1,6 @@
 # OffchainNext.sol
 
-Automatically randomize CCIP-Read endpoints and validate CCIP-Read responses.
+Automatically randomize CCIP-Read endpoints and conditionally choose to accept a CCIP-Read response without terminating the request.
 
 * [**OffchainNext.sol**](./src/OffchainNext.sol)
 
