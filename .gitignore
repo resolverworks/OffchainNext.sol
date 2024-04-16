@@ -1,0 +1,6 @@
+# foundry
+out/
+cache/
+
+# npm
+node_modules/
