@@ -35,7 +35,7 @@ let ezccip_throw = new EZCCIP();
 ezccip_throw.register('chonk() returns (uint256)', () => { throw new Error('wtf'); });
 let ccip_err = await serve(ezccip_throw, {protocol: 'raw', log: false});
 
-const urls = [
+const URLS = [
 	'https://ethereum.org/', // not a ccip server
 	ccip_signed.endpoint,    // wrong protocol
 	ccip_wrong.endpoint,     // wrong answer
@@ -46,16 +46,16 @@ const urls = [
 const stack = [];
 foundry.provider.on('debug', x => {
 	if (x.action === 'sendCcipReadFetchRequest') {
-		let i = urls.indexOf(x.urls[x.index]);
-		stack.push(i < 0 ? '*' : i);
+		let i = URLS.indexOf(x.urls[x.index]);
+		stack.push(i < 0 ? '@' : i);
 	}
 });
 
-for (let i = 0; i < 10; i++) {
+for (let urls of permutations(URLS)) {
 	foundry.provider.send('anvil_mine', ['0x1']);
 	stack.length = 0;
 	assert.equal(await contract.f(urls, {enableCcipRead: true}), EXPECT);
-	console.log(stack.length, stack.join(' '));
+	console.log(stack.length, stack.join(''));
 }
 
 foundry.shutdown();
@@ -63,3 +63,28 @@ ccip_ok.http.close();
 ccip_err.http.close();
 ccip_wrong.http.close();
 ccip_signed.http.close();
+
+// https://github.com/adraffy/ens-normalize.js/blob/9c0e17690d1d2a3d2f5f415814b4bd627d6f1d66/derive/utils.js#L46
+function* permutations(v) {
+	let n = v.length;
+	if (!n) return;
+	v = v.slice();
+	yield v;
+	if (n == 1) return;
+	let u = Array(n).fill(0);
+	let i = 1;
+	while (i < n) {
+		if (u[i] < i) {
+			let swap = i&1 ? u[i] : 0;
+			let temp = v[swap];
+			v[swap] = v[i];
+			v[i] = temp;
+			yield v.slice();
+			u[i]++;
+			i = 1;
+		} else {
+			u[i] = 0;
+			i++;
+		}
+	}
+}
