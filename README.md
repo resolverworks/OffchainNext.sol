@@ -6,7 +6,7 @@ Automatically randomize CCIP-Read endpoints and conditionally choose to accept a
 
 ### Usage
 
-* Use `offchainLookup(...)` instead of `revert OffchainLookup(sender, ...)`
+* Use `offchainLookup(...)` instead of `revert OffchainLookup(...)` (same arguments)
 * Use `revert OffchainTryNext()` during callback to reject "faux" responses and proceed to the next endpoint
 * Will `revert OffchainLookupUnanswered()` if all endpoints attempted once
 

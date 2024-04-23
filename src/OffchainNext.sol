@@ -1,6 +1,6 @@
 /// @author raffy.eth
 // SPDX-License-Identifier: MIT
-// version: 0.0.2
+// version: 0.0.3
 pragma solidity ^0.8.23;
 
 abstract contract OffchainNext {
@@ -25,22 +25,22 @@ abstract contract OffchainNext {
 		return bytes4(data) == OffchainTryNext.selector;
 	}
 
-	function offchainLookup(string[] memory urls, bytes memory request, bytes4 callback, bytes memory carry) internal view {
+	function offchainLookup(address sender, string[] memory urls, bytes memory request, bytes4 callback, bytes memory carry) internal view {
 		(string[] memory rest, string[] memory pair) = _nextPair(urls);
-		revert OffchainLookup(address(this), pair, request, this.offchainLookupCallback.selector, abi.encode(rest, request, callback, carry));
+		revert OffchainLookup(address(this), pair, request, this.offchainLookupCallback.selector, abi.encode(sender, rest, request, callback, carry));
 	}
 
 	function offchainLookupCallback(bytes calldata response, bytes calldata extra) external view {
-		(string[] memory urls, bytes memory request, bytes4 callback, bytes memory carry) = abi.decode(extra, (string[], bytes, bytes4, bytes));
+		(address sender, string[] memory urls, bytes memory request, bytes4 callback, bytes memory carry) = abi.decode(extra, (address, string[], bytes, bytes4, bytes));
 		if (response.length != 0) {
-			(bool ok, bytes memory v) = address(this).staticcall(abi.encodeWithSelector(callback, response, carry));
+			(bool ok, bytes memory v) = sender.staticcall(abi.encodeWithSelector(callback, response, carry));
 			if (ok) {
 				assembly { return(add(v, 32), mload(v)) }
 			} else if (!_shouldTryNext(v)) {
 				assembly { revert(add(v, 32), mload(v)) }
 			}
 		}
-		offchainLookup(urls, request, callback, carry);
+		offchainLookup(sender, urls, request, callback, carry);
 	}
 
 }
