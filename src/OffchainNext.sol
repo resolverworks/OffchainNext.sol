@@ -1,6 +1,6 @@
 /// @author raffy.eth
+/// @custom:version 0.0.3
 // SPDX-License-Identifier: MIT
-// version: 0.0.3
 pragma solidity ^0.8.23;
 
 abstract contract OffchainNext {
