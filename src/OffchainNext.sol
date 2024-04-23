@@ -1,12 +1,16 @@
 /// @author raffy.eth
 // SPDX-License-Identifier: MIT
+// version: 0.0.2
 pragma solidity ^0.8.23;
 
 abstract contract OffchainNext {
 
 	error OffchainLookup(address from, string[] urls, bytes request, bytes4 callback, bytes carry);
 	error OffchainEOL();
-	error OffchainNext();
+	error TryNext();
+
+	string constant DATA_URI_ALWAYS_OK = "data:application/json,{\"data\":\"0x\"}";
+	bytes32 constant HASH_ALWAYS_OK = keccak256(bytes(DATA_URI_ALWAYS_OK));
 
 	function _nextPair(string[] memory urls) internal view returns (string[] memory rest, string[] memory pair) {
 		if (urls.length == 0) revert OffchainEOL();
@@ -16,11 +20,12 @@ abstract contract OffchainNext {
 		for (uint256 i = index + 1; i < urls.length; i += 1) rest[i-1] = urls[i];
 		pair = new string[](2);
 		pair[0] = urls[index];
-		pair[1] = "data:application/json,{\"data\":\"0x\"}";
+		pair[1] = DATA_URI_ALWAYS_OK;
 	}
 	
+	// return true iff error is due to faux response
 	function _shouldTryNext(bytes memory data) internal virtual view returns (bool) {
-		return bytes4(data) == OffchainNext.selector;
+		return bytes4(data) == TryNext.selector;
 	}
 
 	function lookupOffchain(string[] memory urls, bytes memory request, bytes4 callback, bytes memory carry) internal view {

@@ -4,3 +4,6 @@ cache/
 
 # npm
 node_modules/
+
+# raffy
+junk/

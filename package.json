@@ -1,10 +1,11 @@
 {
 	"type": "module",
+	"version": "0.0.2",
 	"scripts": {
 		"test": "node test/test.js"
 	},
 	"dependencies": {
-		"@adraffy/blocksmith": "^0.0.18",
+		"@adraffy/blocksmith": "^0.0.19",
 		"@resolverworks/ezccip": "^0.0.9"
 	}
 }
