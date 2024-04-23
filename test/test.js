@@ -22,8 +22,8 @@ let contract = await foundry.deploy({sol: `
 		}
 		function g(bytes calldata response, bytes calldata) external view returns (uint256 answer) {
 			answer = uint256(bytes32(response));
-			if (answer != ${EXPECT}) revert OffchainTryNext();
 			if (answer == 0) offchainLookup(address(this), urls, abi.encodeCall(Chonk.chonk2, ()), this.g.selector, ''); 
+			if (answer != ${EXPECT}) revert OffchainTryNext();
 		}
 	}
 `});
