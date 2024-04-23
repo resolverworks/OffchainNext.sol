@@ -4,7 +4,7 @@
 		"test": "node test/test.js"
 	},
 	"dependencies": {
-		"@adraffy/blocksmith": "^0.0.13",
+		"@adraffy/blocksmith": "^0.0.18",
 		"@resolverworks/ezccip": "^0.0.9"
 	}
 }
