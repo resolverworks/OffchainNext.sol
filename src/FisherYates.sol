@@ -7,7 +7,7 @@ library FisherYates {
 	// https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
 
 	function shuffle(uint256 ptr, uint256 size) internal view {
-		shuffle(ptr, size, size, keccak256(abi.encode(blockhash(block.number), gasleft())));
+		shuffle(ptr, size, size, keccak256(abi.encode(blockhash(block.number-1), gasleft())));
 	}
 
 	// assume: ptr is base of array (& + 32)

@@ -18,8 +18,29 @@ Automatically randomize CCIP-Read endpoints and conditionally choose to accept a
 * use `offchainLookup(...)` instead of `revert OffchainLookup(...)` (same arguments)
 * use `revert OffchainTryNext()` during callback to reject responses and proceed to the next endpoint
 * will `revert OffchainLookupUnanswered()` if all endpoints attempted without success
+* override `_shouldTryNext(bytes)` to control which exceptions should retry
 
 ---
+
+## ☠️ Failed Idea: Shuffle
+
+This approach works but cannot determine which endpoint failed so calls may take infinite time.
+
+1. `revert OffchainLookup(shuffled([a, b, c, ...]), ...)`
+1. callback fires if any endpoint responds
+1. since we don't know which endpoint answered, must retry all endpoints again
+
+### Setup
+
+* Abstract Contract Base: [**OffchainShuffle.sol**](./src/OffchainShuffle.sol)
+* Test: [`node test/shuffle.js`](./test/shuffle.js)
+
+### Usage
+
+* inherit `OffchainShuffle`
+* use `offchainLookup(...)` instead of `revert OffchainLookup(...)` (same arguments)
+* on valid response, decode original `carry` using `extractCarry(carry)`
+* to reject response, call `offchainLookup(carry)`
 
 ## ☠️ Failed Idea: Trampoline
 
@@ -29,13 +50,14 @@ This approach is not allowed by EIP-3668, specifically: [Client Lookup Protocol:
 
 ### Setup
 
-* Trampoline Contract: [**OffchainNexter.sol**](./test/trampoline/OffchainNexter.sol)
-* Interface: [**OffchainNext.sol**](./test/trampoline/IOffchainNext.sol)
-* Test: `node test/trampoline/test.js`
+* Singleton Contract: [**OffchainTrampoline.sol**](./src/OffchainTrampoline.sol)
+* Interface: [IOffchainTrampoline.sol](./src/IOffchainTrampoline.sol)
+* Test: [`node test/trampoline.js`](./test/shuffle.js)
 
 ### Usage
 
-* use: `IOffchainNexter($deploy).offchainLookup(...)` instead of `revert OffchainLookup(...)` (same arguments)
+* deploy `IOffchainTrampoline`
+* use: `IOffchainTrampoline().offchainLookup(...)` instead of `revert OffchainLookup(...)` (same arguments)
 	* minimal contract code
 	* avoids stack issues
 * by default, **any** revert during callback will try next endpoint
@@ -44,22 +66,7 @@ This approach is not allowed by EIP-3668, specifically: [Client Lookup Protocol:
 * use `revert OffchainTryNext()` to always try next endpoint
 * will `revert OffchainLookupUnanswered()` if all endpoints attempted without success
 
-## ☠️ Failed Idea: Shuffle
+## FisherYates.sol
 
-This approach cannot determine which endpoint failed.
-
-1. `urls = [a, b, c]`
-2. `shuffle() = [b, a, c]`
-3. `revert OffchainLookup()`
-4. callback fires if any endpoint responds
-5. if we want to reject it, we don't know which endpoint to dodge
-
-### Setup
-
-* Abstract Contract Base: [**OffchainShuffle.sol**](./test/shuffle/OffchainShuffle.sol)
-* Test: `node test/shuffle/test.js`
-
-### Usage
-
-* inherit `OffchainShuffle`
-* use `offchainLookup(...)` instead of `revert OffchainLookup(...)` (same arguments)
+* Library: [**FisherYates.sol**](./src/FisherYates.sol)
+* Test: [`node test/FisherYates.js`](./test/FisherYates.js)

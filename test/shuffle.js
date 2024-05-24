@@ -2,11 +2,11 @@
 
 import {Foundry} from '@adraffy/blocksmith';
 import {serve, EZCCIP} from '@resolverworks/ezccip';
-import {permutations} from './utils.js';
+import assert from 'node:assert/strict';
 
 const EXPECT = 69420n;
 
-let foundry = await Foundry.launch({procLog: true});
+let foundry = await Foundry.launch();
 
 let contract = await foundry.deploy({sol: `
 	import '@src/OffchainShuffle.sol';
@@ -21,8 +21,9 @@ let contract = await foundry.deploy({sol: `
 		function f() external view returns (uint256) {
 			offchainLookup(address(this), _urls, abi.encodeCall(Chonk.chonk, ()), this.g.selector, '');
 		}
-		function g(bytes calldata response, bytes calldata) external view returns (uint256 answer) {
+		function g(bytes calldata response, bytes calldata encodedState) external view returns (uint256 answer) {
 			answer = uint256(bytes32(response));
+			if (answer != ${EXPECT}) offchainLookup(encodedState);
 		}
 	}
 `});
@@ -53,16 +54,15 @@ await foundry.confirm(contract.set_urls(URLS), {silent: true});
 const stack = [];
 foundry.provider.on('debug', x => {
 	if (x.action === 'sendCcipReadFetchRequest') {
-		let i = URLS.indexOf(x.urls[x.index]);
-		stack.push(i < 0 ? '@' : i);
+		stack.push(URLS.indexOf(x.urls[x.index]));
 	}
 });
 
-for (let i = 0, n = URLS.length ** 2; i < 5; i++) {
+for (let i = 0; i < 100; i++) {
 	stack.length = 0;
 	await foundry.nextBlock(); // rng depends on block
-	let ok = await contract.f({enableCcipRead: true}).catch(() => {}) === EXPECT;
-	console.log(stack.length, stack.join(''), ok);
+	assert.equal(await contract.f({enableCcipRead: true}), EXPECT);
+	console.log(i, stack.length, stack.join(''));
 }
 
 foundry.shutdown();
