@@ -1,30 +1,28 @@
+// ☠️ Failed Idea: Shuffle
+
 import {Foundry} from '@adraffy/blocksmith';
 import {serve, EZCCIP} from '@resolverworks/ezccip';
-import assert from 'node:assert/strict';
 import {permutations} from './utils.js';
 
 const EXPECT = 69420n;
 
-let foundry = await Foundry.launch();
+let foundry = await Foundry.launch({procLog: true});
 
 let contract = await foundry.deploy({sol: `
-	import {OffchainNext} from '@src/OffchainNext.sol';
+	import '@src/OffchainShuffle.sol';
 	interface Chonk {
 		function chonk() external returns (uint256);
-		function chonk2() external returns (uint256);
 	}
-	contract Test is OffchainNext {
-		string[] urls;
-		function set_urls(string[] memory _urls) external {
-			urls = _urls;
+	contract Test is OffchainShuffle {
+		string[] _urls;
+		function set_urls(string[] memory urls) external {
+			_urls = urls;
 		}
 		function f() external view returns (uint256) {
-			offchainLookup(address(this), urls, abi.encodeCall(Chonk.chonk, ()), this.g.selector, '');
+			offchainLookup(address(this), _urls, abi.encodeCall(Chonk.chonk, ()), this.g.selector, '');
 		}
 		function g(bytes calldata response, bytes calldata) external view returns (uint256 answer) {
 			answer = uint256(bytes32(response));
-			if (answer == 0) offchainLookup(address(this), urls, abi.encodeCall(Chonk.chonk2, ()), this.g.selector, ''); 
-			if (answer != ${EXPECT}) revert OffchainTryNext();
 		}
 	}
 `});
@@ -50,6 +48,8 @@ const URLS = [
 	ccip_ok.endpoint         // correct
 ];
 
+await foundry.confirm(contract.set_urls(URLS), {silent: true});
+
 const stack = [];
 foundry.provider.on('debug', x => {
 	if (x.action === 'sendCcipReadFetchRequest') {
@@ -58,28 +58,15 @@ foundry.provider.on('debug', x => {
 	}
 });
 
-console.log('Trying all permutations...');
-for (let urls of permutations(URLS)) {
-	// new blocks (source of rng) no longer needed
-	// since we try all permutations
-	//foundry.provider.send('anvil_mine', ['0x1']);
+for (let i = 0, n = URLS.length ** 2; i < 5; i++) {
 	stack.length = 0;
-	await foundry.confirm(contract.set_urls(urls), {silent: true});
-	assert.equal(await contract.f({enableCcipRead: true}), EXPECT);
-	console.log(stack.length, stack.join(''));
+	await foundry.nextBlock(); // rng depends on block
+	let ok = await contract.f({enableCcipRead: true}).catch(() => {}) === EXPECT;
+	console.log(stack.length, stack.join(''), ok);
 }
-
-// try a recursive example
-let ezccip_recursive = new EZCCIP();
-ezccip_recursive.register('chonk() returns (uint256)', () => [0]);
-ezccip_recursive.register('chonk2() returns (uint256)', () => [EXPECT]);
-let ccip_recursive = await serve(ezccip, {protocol: 'raw', log: false});
-await foundry.confirm(contract.set_urls([ccip_err.endpoint, ccip_recursive.endpoint]));
-assert.equal(await contract.f({enableCcipRead: true}), EXPECT);
 
 foundry.shutdown();
 ccip_ok.http.close();
 ccip_err.http.close();
 ccip_wrong.http.close();
 ccip_signed.http.close();
-ccip_recursive.http.close();
