@@ -60,9 +60,6 @@ foundry.provider.on('debug', x => {
 
 console.log('Trying all permutations...');
 for (let urls of permutations(URLS)) {
-	// new blocks (source of rng) no longer needed
-	// since we try all permutations
-	//foundry.provider.send('anvil_mine', ['0x1']);
 	stack.length = 0;
 	await foundry.confirm(contract.set_urls(urls), {silent: true});
 	assert.equal(await contract.f({enableCcipRead: true}), EXPECT);
