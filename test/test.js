@@ -44,6 +44,7 @@ let ccip_err = await serve(ezccip_throw, {protocol: 'raw', log: false});
 
 const URLS = [
 	'https://ethereum.org/', // not a ccip server
+	//'https://raffy.xyz/notfound', // 404
 	ccip_signed.endpoint,    // wrong protocol
 	ccip_wrong.endpoint,     // wrong answer
 	ccip_err.endpoint,       // throws
